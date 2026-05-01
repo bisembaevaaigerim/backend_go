@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -22,6 +23,7 @@ func init() {
 }
 
 func SendBookingNotification(userID uint, eventID uint) error {
+	notifyURL := getNotifyURL()
 	resp, err := restyClient.R().
 		SetHeader("Content-Type", "application/json").
 		SetBody(map[string]interface{}{
@@ -29,7 +31,7 @@ func SendBookingNotification(userID uint, eventID uint) error {
 			"event_id": eventID,
 			"message":  fmt.Sprintf("Your booking for event #%d is confirmed!", eventID),
 		}).
-		Post("http://localhost:8085/notify")
+		Post(notifyURL + "/notify")
 
 	if err != nil {
 		return fmt.Errorf("notification request failed: %w", err)
@@ -37,4 +39,10 @@ func SendBookingNotification(userID uint, eventID uint) error {
 
 	log.Printf("[Resty] Notification response: %s", resp.String())
 	return nil
+}
+func getNotifyURL() string {
+	if url := os.Getenv("NOTIFICATION_SERVICE_URL"); url != "" {
+		return url
+	}
+	return "http://localhost:8085"
 }
