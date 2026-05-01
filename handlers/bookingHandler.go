@@ -3,6 +3,7 @@ package handlers
 import (
 	"backend-go/database"
 	"backend-go/models"
+	"log"
 	"math"
 	"net/http"
 	"strconv"
@@ -32,6 +33,10 @@ func CreateBooking(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to add booking"})
 		return
 	}
+	if err := SendBookingNotification(booking.UserID, booking.EventID); err != nil {
+		log.Printf("[Warning] Could not send notification: %v", err)
+	}
+
 	c.JSON(http.StatusOK, booking)
 }
 
@@ -92,7 +97,7 @@ func UpdateBooking(c *gin.Context) {
 		return
 	}
 
-	booking.User = input.User
+	booking.UserID = input.UserID
 	booking.EventID = input.EventID
 	booking.Quantity = input.Quantity
 	result := database.DB.Save(&booking)
